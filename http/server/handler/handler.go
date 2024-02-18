@@ -1,71 +1,176 @@
-// Папка с хэндлерами
+// пакет реализации всех хэндлеров
 package handler
 
 import (
 	"Distributed_arithmetic_expression_evaluator/database"
+	"Distributed_arithmetic_expression_evaluator/database/operationTime"
+	"Distributed_arithmetic_expression_evaluator/logic"
 	"fmt"
 	"html/template"
 	"net/http"
-	"os"
 	"regexp"
+	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 )
 
-// /home
-func MainForm(w http.ResponseWriter, r *http.Request) {
-	//Получаем данные из формы
+func Calculator(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles("html/homePage.html")) // шаблон
+	
+	data := database.GetDB()
+	err := tmpl.Execute(w, data) // заполнение шаблона 
+	if err != nil {
+		fmt.Println(err, "ошибка формы")
+	}
+}
+
+func HomeForm(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		fmt.Println("Что-то не так в бэке")
-		w.WriteHeader(500)
+		fmt.Println(err, "парс формы")
 	}
+	form := r.FormValue("expression-input") // получение выражения из формы
 
-	form := r.FormValue("expression")
+	// регулярка, по которой определяется - выражение введено правильно или с ошибкой
+	// не реализована запись со скобками, но есть отрицательные числа
+	limit := regexp.MustCompile(`^-?[0-9]+(?:[\+\-\*/]-?[0-9]+)*$`)
+	id := uuid.New().String()[:8] // генерация id
 
-	//Проверка на правильность
-	limit := regexp.MustCompile(`^[0-9]+(?:[\+\-\*/][0-9]+)*$`)
-
-	// Если нет - код 400
 	if !limit.MatchString(form) {
-		w.WriteHeader(400)
 		fmt.Println("Введенно неверное выражение:", form)
 
-		// Если да - добавляем в мапу, код 200
+		// добавление в массив с флагом false
+		database.SetDB(id, form, time.Second * 0, false)
 	} else {
-		w.WriteHeader(200)
 		fmt.Println("Ваше выражение принято к рассмотрению")
-		database.SetDB(uuid.New().String()[:9], form) // uuid делает id с ограничением длинны в 8 символов
-	}
-}
 
-func AllExpressionsTime(w http.ResponseWriter, r *http.Request) {
-	//создаем html-шаблон
-	wd, err := os.Getwd()
-	if err != nil {
-		fmt.Println(err)
-	}
-	tmpl, err := template.ParseFiles(wd + "\\templates\\AllTimings.tmpl")
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
+		logic.ExecutionTime(id, form) // подробнее в пакете logic
+		timeEnd := logic.GetExecTime(id) // подробнее в пакете logic
+		database.SetDB(id, form, timeEnd, true) // добавление в массив с флагом true
+
+		// go рутинка, которая ждет пока пройдет время для счета выражения,
+		// а после утановит статус о готовности
+		go func(id string) {
+			for {
+				if logic.GetExecTime(id) <= 0 {
+					database.IsReadySet(id)
+
+					break
+				}
+			}
+		}(id)
 	}
 
-	err = tmpl.Execute(w, nil)
-	if err != nil {
-		http.Error(w, err.Error(), 400)
-		return
-	} else {
-		w.WriteHeader(200)
-	}
-}
-
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("Distributed_arithmetic_expression_evaluator\\html\\homePage.html"))
-
-	tmpl.Execute(w, nil)
+	// редирект на ту же страницу, т.к post форма перенаправляет на страницу, 
+	// которая записана в поле actions
+	http.Redirect(w, r, "http://127.0.0.1:8123/", http.StatusSeeOther)
 }
 
 func AllOperationsAndTiming(w http.ResponseWriter, r *http.Request) {
-	//
+	tmpl := template.Must(template.ParseFiles("html/AllTimings.html")) // шаблон
+	
+	data := operationTime.GetOperators()
+	err := tmpl.Execute(w, data) // заполнение шаблона
+	if err != nil {
+		fmt.Println(err, "загрузка шаблона")
+	}
+}
+
+func OperationFormPlus(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Println(err, "парс формы")
+	}
+
+	plus := r.FormValue("plus-time") // получение значения для "+"
+	plusN, _ := strconv.Atoi(plus) // перевод в int
+	// запись нового значения для "+" в массив
+	operationTime.SetTimePlus(time.Duration(plusN) * time.Second)
+
+	// редирект
+	http.Redirect(w, r, "http://127.0.0.1:8123/timeOfOperations", http.StatusSeeOther)
+}
+
+// по аналогии
+func OperationFormMinus(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Println(err, "парс формы 2")
+	}
+
+	minus := r.FormValue("minus-time")
+	minusN, _ := strconv.Atoi(minus)
+	operationTime.SetTimeMinus(time.Duration(minusN) * time.Second)
+
+	http.Redirect(w, r, "http://127.0.0.1:8123/timeOfOperations", http.StatusSeeOther)
+}
+
+// по аналогии
+func OperationFormMult(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Println(err, "парс формы 3")
+	}
+
+	mult := r.FormValue("multiplication-time")
+	multN, _ := strconv.Atoi(mult)
+	operationTime.SetTimeMult(time.Duration(multN) * time.Second)
+
+	http.Redirect(w, r, "http://127.0.0.1:8123/timeOfOperations", http.StatusSeeOther)
+}
+
+// по аналогии
+func OperationFormDivision(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Println(err, "парс формы 4")
+	}
+
+	division := r.FormValue("division-time")
+	divisionN, _ := strconv.Atoi(division)
+	operationTime.SetTimeDivision(time.Duration(divisionN) * time.Second)
+
+	http.Redirect(w, r, "http://127.0.0.1:8123/timeOfOperations", http.StatusSeeOther)
+}
+
+func ResultsPage(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles("html/ResultsPage.html")) // шаблон
+	
+	data := database.GetDB()
+	err := tmpl.Execute(w, data) // заполнение шаблона
+	if err != nil {
+		fmt.Println(err, "загрузка шаблона 2")
+	}
+}
+
+func Searcher(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Println(err, "парс формы 5")
+	}
+
+	s := r.FormValue("search-input") // получение id для поиска выражения
+
+
+	data := database.GetDB()
+	// долгий поиск введеного id
+	for i := range data.Datas {
+		if data.Datas[i].Id == s {
+			
+			// перевод в состояние "поиска" и добавление в поисковой массив
+			database.IsInSearchSet(data.Datas[i]) 
+			break
+		}
+	}
+	
+	// редирект
+	http.Redirect(w, r, "http://127.0.0.1:8123/Results", http.StatusSeeOther)
+}
+
+func SearchReset(w http.ResponseWriter, r *http.Request) {
+	database.IsNotInSearch() // сброс состояния "поиска"
+
+	// редирект
+	http.Redirect(w, r, "http://127.0.0.1:8123/Results", http.StatusSeeOther)
 }

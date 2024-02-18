@@ -6,9 +6,167 @@
     <title>Распределенный вычислитель арифметических выражений</title>
 </head>
 <body>
-    <form action="http://127.0.0.1:8123/home" method="post" enctype="application/x-www-form-urlencoded">
-        Введите выражение: <input type="text" name="expression" id="exp"> <br>
-        <input type="submit" value="submit">
-    </form>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f1e4c3;
+    }
+
+    header {
+        background-color: #155b32;
+        color: #fff;
+        text-align: center;
+        padding: 20px 0;
+    }
+
+    nav ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    nav ul li {
+        display: inline-block;
+        margin-right: 20px;
+    }
+
+    nav ul li a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 18px;
+    }
+
+    main {
+        padding: 20px;
+        max-width: 1000px;
+        margin: auto;
+    }
+
+    .calculator {
+        text-align: center;
+    }
+
+    .calculator form {
+        margin-bottom: 20px;
+    }
+
+    .calculator input[type="text"] {
+        padding: 10px;
+        width: 300px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+    }
+
+    .calculator button {
+        padding: 10px 20px;
+        background-color: #657255;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .calculator button:hover {
+        background-color: #2e8922;
+    }
+
+    .expression-table {
+        margin-top: 40px;
+    }
+
+    .expression-table h2 {
+        text-align: center;
+        color: #32362e;
+    }
+
+    .table-container {
+        overflow-x: auto;
+        border-radius: 10px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #fcf9e5;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+    }
+
+    th, td {
+        border: 1px solid #fcf9e5;
+        padding: 15px;
+    }
+
+    th {
+        background-color: #4cc27d;
+        color: #333333;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    td {
+        text-align: center;
+    }
+
+    tr:hover {
+        background-color: #eeece1;
+    }
+</style>
+
+<header>
+    <nav>
+        <ul>
+            <li><a href="http://127.0.0.1:8123/">Калькулятор</a></li>
+            <li><a href="http://127.0.0.1:8123/timeOfOperations">Операции</a></li>
+            <li><a href="http://127.0.0.1:8123/Results">Результаты</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <div class="calculator">
+        <form action="http://127.0.0.1:8123/homeForm" method="post" id="expression-form">
+            <input type="text" id="expression-input" name="expression-input" placeholder="Введите выражение, например -2+2-4*6" required>
+            <button type="submit">Отправить</button>
+        </form>
+    </div>
+
+    <div class="expression-table">
+        <h2>Статус выражений</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Выражение</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody id="expression-list">
+                    {{ range .Datas }}
+                    <tr>
+                        <td>{{ .Id }}</td>
+                        <td>{{ .Expression }}</td>
+                        <td>
+                            {{ if .Flag }}
+                                {{  if .IsReady  }}
+                                    Решено!
+                                {{  else  }}
+                                    В разработке (понадобится: {{  .Time  }})
+                                {{  end  }}
+                            {{ else }}
+                                Ошибка выражения
+                            {{  end  }}
+                        </td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
 </body>
 </html>

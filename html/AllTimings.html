@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Время исполнения операций</title>
+</head>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f1e4c3;
+    }
+
+    header {
+        background-color: #155b32;
+        color: #fff;
+        text-align: center;
+        padding: 20px 0;
+    }
+
+    nav ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    nav ul li {
+        display: inline-block;
+        margin-right: 20px;
+    }
+
+    nav ul li a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 18px;
+    }
+
+    main {
+        padding: 20px;
+        max-width: 600px;
+        margin: auto;
+    }
+
+    .operations {
+        text-align: center;
+        margin-top: 40px;
+        margin-bottom: 20px;
+    }
+
+    .operations input[type="number"] {
+        padding: 10px;
+        width: 300px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+    }
+
+    .operations button {
+        padding: 10px 20px;
+        background-color: #657255;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin-left: 5px;
+    }
+
+    .operations button:hover {
+        background-color: #2e8922;
+    }
+
+    .operations h2 {
+        text-align: center;
+        color: #32362e;
+    }
+
+    table {
+        overflow-x: auto;
+        border-radius: 10px;
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #fcf9e5;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+    }
+
+    th, td {
+        border: 1px solid #fcf9e5;
+        padding: 15px;
+    }
+
+    th {
+        background-color: #4cc27d;
+        color: #333333;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    td {
+        text-align: center;
+    }
+
+    tr:hover {
+        background-color: #eeece1;
+    }
+
+    #simbol {
+        font-size: 28px;
+    }
+</style>
+<header>
+    <nav>
+        <ul>
+            <li><a href="http://127.0.0.1:8123/">Калькулятор</a></li>
+            <li><a href="http://127.0.0.1:8123/timeOfOperations">Операции</a></li>
+            <li><a href="http://127.0.0.1:8123/Results">Результаты</a></li>
+        </ul>
+    </nav>
+</header>
+<body>
+    <main>
+        <div class="operations">
+            <h2>Время операций</h2>
+            <table>
+                <th>Операция</th>
+                <th>Время</th>
+                <tr>
+                    <td id="simbol">+</td>
+                    <td>
+                        <form action="http://127.0.0.1:8123/AllOperationFormPlus" method="post">
+                            <input type="number" name="plus-time" id="operations-time" required placeholder="Введите время в секундах">
+                            <button type="submit">Отправить</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr>
+                    <td id="simbol">-</td>
+                    <td>
+                        <form action="http://127.0.0.1:8123/AllOperationFormMinus" method="post">
+                            <input type="number" name="minus-time" id="operations-time" required placeholder="Введите время в секундах">
+                            <button type="submit">Отправить</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr>
+                    <td id="simbol">*</td>
+                    <td>
+                        <form action="http://127.0.0.1:8123/AllOperationFormMult" method="post">
+                            <input type="number" name="multiplication-time" id="operations-time" required placeholder="Введите время в секундах">
+                            <button type="submit">Отправить</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr>
+                    <td id="simbol">/</td>
+                    <td>
+                        <form action="http://127.0.0.1:8123/AllOperationFormDivision" method="post">
+                            <input type="number" name="division-time" id="operations-time" required placeholder="Введите время в секундах">
+                            <button type="submit">Отправить</button>
+                        </form>
+                    </td>
+                </tr>
+            </table>
+
+            <h2>Текущий настройки</h2>
+            <table>
+                <th>Операция</th>
+                <th>Время</th>
+                {{  range .Operations  }}
+                    <tr>
+                        <td id="simbol">{{  .Operation  }}</td>
+                        <td>{{  .Time  }}</td>
+                    </tr>
+                {{  end  }}
+            </table>
+        </div>
+    </main>
+</body>
+</html>
