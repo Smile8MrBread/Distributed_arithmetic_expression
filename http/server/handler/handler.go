@@ -33,8 +33,8 @@ func HomeForm(w http.ResponseWriter, r *http.Request) {
 	form := r.FormValue("expression-input") // получение выражения из формы
 
 	// регулярка, по которой определяется - выражение введено правильно или с ошибкой
-	// не реализована запись со скобками, но есть отрицательные числа
-	limit := regexp.MustCompile(`^-?[0-9]+(?:[\+\-\*/]-?[0-9]+)*$`)
+	// не реализована запись со скобками
+	limit := regexp.MustCompile(`^-?[0-9]+(?:[\+\-\*/][0-9]+)*$`)
 	id := uuid.New().String()[:8] // генерация id
 
 	if !limit.MatchString(form) {
